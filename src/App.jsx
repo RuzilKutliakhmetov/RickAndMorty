@@ -14,9 +14,9 @@ function App() {
 	return (
 		<div
 			ref={topRef}
-			className='font-Caveat w-full h-full min-h-screen flex flex-row bg-black text-white gap-8 p-4 '
+			className='font-Caveat w-full h-full min-h-screen flex flex-row bg-black text-white gap-8 p-2 sm:p-4 '
 		>
-			<div className='flex-1 w-full h-min'>
+			<div className='flex-1 h-min'>
 				{selectedCharacter ? (
 					<CharacterCard selectedCharacter={selectedCharacter} />
 				) : (

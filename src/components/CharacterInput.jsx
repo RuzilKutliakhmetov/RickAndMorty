@@ -63,6 +63,8 @@ const CharacterInput = ({ characterData, onChange }) => {
 				</label>
 				<input
 					type='number'
+					min={0}
+					max={52}
 					id='episode'
 					name='episode'
 					className='block w-full p-2 text-white font-medium border border-white rounded-lg bg-black text-2xl focus:ring-black focus:border-white'

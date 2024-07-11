@@ -9,7 +9,7 @@ export default function CharacterList({ data, scrollToTop }) {
 			{data.map((character, index) => (
 				<div
 					key={index}
-					className='flex flex-row gap-2 justify-center items-center p-4 mt-3 text-2xl border border-white rounded-lg hover:cursor-pointer'
+					className='flex flex-row gap-2 justify-center items-center p-4 mt-3 text-lg sm:text-2xl border border-white rounded-lg hover:cursor-pointer'
 					onClick={() => {
 						scrollToTop()
 						setSelectedCharacter(character)

@@ -7,9 +7,11 @@ export default function CharacterCard() {
 		useContext(CharacterContext)
 
 	return (
-		<div className='pl-8 pr-4 py-4 flex flex-col border border-white rounded-2xl '>
+		<div className='pl-4 sm:pl-8 pr-4 py-4 flex flex-col border border-white rounded-2xl '>
 			<div className='flex flex-row justify-between'>
-				<div className='text-4xl hover:cursor-default'>Полная информация</div>
+				<div className='text-2xl sm:text-4xl hover:cursor-default'>
+					Полная информация
+				</div>
 				<div
 					onClick={() => {
 						setSelectedCharacter(null)
@@ -32,8 +34,10 @@ export default function CharacterCard() {
 						className='w-1/3 rounded-full mr-4'
 					/>
 					<div className='flex flex-col'>
-						<h2 className='text-4xl font-bold '>{selectedCharacter.name}</h2>
-						<div className='text-2xl text-gray-600 font-bold'>
+						<h2 className='text-2xl sm:text-4xl font-bold '>
+							{selectedCharacter.name}
+						</h2>
+						<div className='text-xs sm:text-2xl text-gray-600 font-bold'>
 							ID: {selectedCharacter.id}
 						</div>
 						<CharacterCardInfo
@@ -72,7 +76,7 @@ export default function CharacterCard() {
 				)}
 				<table className='min-w-full mt-4 divide-y divide-gray-200'>
 					<thead>
-						<tr className='sm:text-xl'>
+						<tr className='text-xs sm:text-xl'>
 							<th className='sm:px-4 px-2 sm:py-2 py-1 font-bold text-left leading-2  uppercase tracking-wider'>
 								Эпизод
 							</th>
@@ -86,7 +90,7 @@ export default function CharacterCard() {
 					</thead>
 					<tbody className='divide-y divide-gray-200'>
 						{episodes.map(episode => (
-							<tr className='sm:text-2xl' key={episode.id}>
+							<tr className='text-xs sm:text-2xl' key={episode.id}>
 								<td className='px-4 py-2 whitespace-no-wrap'>
 									{episode.episode}
 								</td>

@@ -6,139 +6,172 @@ import CharacterInput from './CharacterInput'
 import CharacterList from './CharacterList'
 import Pagination from './Pagination'
 
-const URL = 'https://rickandmortyapi.com/api/character/'
-
-function SearchForm({ scrollToTop }) {
+export default function SearchForm({ scrollToTop }) {
 	const { setSelectedCharacter } = useContext(CharacterContext)
-	const [characterData, setCharacterData] = useState(() => {
-		// Загружаем данные из localStorage, если они есть
-		const storedData = localStorage.getItem('characterData')
+
+	const [searchData, setSearchData] = useState(() => {
+		const storedData = localStorage.getItem('searchData')
 		if (storedData) {
 			return JSON.parse(storedData)
 		} else {
 			return {
-				name: '',
-				status: '',
-				species: '',
-				episode: 0,
+				characterData: {
+					name: '',
+					status: '',
+					species: '',
+					episode: 0,
+				},
+				page: 1,
+				totalPage: 1,
+				nextPage: null,
+				prevPage: null,
+				countCharacter: 0,
+				searchType: 'character',
 			}
 		}
 	})
-	const [error, setError] = useState(false)
-	const [page, setPage] = useState(() => {
-		// Загружаем данные из localStorage, если они есть
-		const storedPage = localStorage.getItem('page')
-		if (storedPage) {
-			return parseInt(storedPage, 10) // Преобразуем в число
-		} else {
-			return 1
-		}
-	})
-	const [totalPage, setTotalPage] = useState(1)
-	const [countCharacter, setCountCharacter] = useState(0)
-	const [searchResult, setSearchResult] = useState([])
-	const [nextPage, setNextPage] = useState('')
-	const [prevPage, setPrevPage] = useState('')
 
-	function getPostsByParams(params) {
+	const {
+		characterData,
+		page,
+		totalPage,
+		nextPage,
+		prevPage,
+		countCharacter,
+		searchType,
+	} = searchData
+
+	const [error, setError] = useState(false)
+	const [searchResult, setSearchResult] = useState([])
+
+	// Функция для поиска по персонажам
+	function getPostsByCharacterParams(params) {
 		axios
-			.get(URL, {
+			.get('https://rickandmortyapi.com/api/character/', {
 				params: params,
 			})
 			.then(response => {
-				if (params.episode && params.episode !== '0') {
-					const filteredResults = response.data.results.filter(character => {
-						return character.episode.some(episodeUrl => {
-							const episodeNumber = episodeUrl.split('/').pop()
-							return episodeNumber === params.episode
-						})
-					})
-					setSearchResult(filteredResults)
-				} else {
-					setSearchResult(response.data.results)
-				}
-				setCountCharacter(response.data.info.count)
-				setNextPage(response.data.info.next)
-				setPrevPage(response.data.info.prev)
-				setTotalPage(response.data.info.pages)
+				setSearchResult(response.data.results)
+				setSearchData(prevSearchData => ({
+					...prevSearchData,
+					countCharacter: response.data.info.count,
+					nextPage: response.data.info.next,
+					prevPage: response.data.info.prev,
+					totalPage: response.data.info.pages,
+				}))
 				setError(false)
 			})
 			.catch(error => {
 				console.log(error)
 				setError(true)
-				setTotalPage(null)
-				setSearchResult([])
+				setSearchData(prevSearchData => ({
+					...prevSearchData,
+					totalPage: null,
+					searchResult: [],
+				}))
 			})
 	}
 
-	async function fetchEpisodes(selectedEpisode) {
+	// Функция для поиска по эпизоду
+	async function getPostsByEpisode(episodeId) {
 		try {
-			if (selectedEpisode) {
-				const charactersData = await Promise.all(
-					selectedEpisode.characters.map(characterUrl =>
-						axios.get(characterUrl)
-					)
-				)
-				setSearchResult(charactersData.map(response => response.data))
-				setCountCharacter(charactersData.length)
-				setTotalPage(1)
-			}
+			const response = await axios.get(
+				`https://rickandmortyapi.com/api/episode/${episodeId}`
+			)
+			const charactersData = await Promise.all(
+				response.data.characters.map(characterUrl => axios.get(characterUrl))
+			)
+
+			setSearchResult(charactersData.map(response => response.data))
+			setSearchData(prevSearchData => ({
+				...prevSearchData,
+				countCharacter: charactersData.length,
+				nextPage: null,
+				prevPage: null,
+				totalPage: 1,
+			}))
+			setError(false)
 		} catch (error) {
-			console.error(error)
+			console.log(error)
+			setError(true)
+			setSearchData(prevSearchData => ({
+				...prevSearchData,
+				nextPage: null,
+				prevPage: null,
+				totalPage: null,
+				searchResult: [],
+			}))
 		}
 	}
 
-	function getPostsByEpisode(episodeId) {
-		console.log(`https://rickandmortyapi.com/api/episode/${episodeId}`)
-		axios
-			.get(`https://rickandmortyapi.com/api/episode/${episodeId}`)
-			.then(response => {
-				fetchEpisodes(response.data)
-			})
-			.catch(error => {
-				console.log(error)
-				setError(true)
-				setTotalPage(null)
-				setSearchResult([])
-			})
-	}
+	// Сохраняем данные в localStorage
+	useEffect(() => {
+		localStorage.setItem('searchData', JSON.stringify(searchData))
+	}, [searchData])
 
+	// Функция для выполнения поиска
 	useEffect(() => {
 		setSearchResult([])
-		const params = Object.assign(
-			{},
-			...Object.entries(characterData)
-				.filter(([key, value]) => value !== '' && value !== 0)
-				.map(([key, value]) => ({ [key]: value }))
-		)
-		params.page = page
+		let params = {}
 		if (
-			!('name' in params) &&
-			!('status' in params) &&
-			!('species' in params) &&
-			params.episode &&
-			params.episode !== '0'
-		)
-			getPostsByEpisode(params.episode)
-		else getPostsByParams(params)
-	}, [characterData, page])
+			searchType === 'character' ||
+			characterData.episode == '' ||
+			characterData.episode == 0
+		) {
+			params = Object.assign(
+				{},
+				...Object.entries(characterData)
+					.filter(([key, value]) => value !== '' && value !== 0)
+					.map(([key, value]) => ({ [key]: value }))
+			)
+			params.page = page
+			getPostsByCharacterParams(params)
+		} else if (searchType === 'episode') {
+			if (characterData.episode && characterData.episode !== 0) {
+				getPostsByEpisode(characterData.episode)
+			}
+		}
+	}, [characterData, page, searchType])
 
-	useEffect(() => {
-		localStorage.setItem('characterData', JSON.stringify(characterData))
-	}, [characterData])
-
-	useEffect(() => {
-		localStorage.setItem('page', page)
-	}, [page])
-
+	// Обработчик изменения параметров поиска
 	const handleChange = event => {
 		const { name, value } = event.target
-		setPage(1)
+		if (name === 'episode')
+			setSearchData(prevSearchData => ({
+				...prevSearchData,
+				characterData: {
+					...prevSearchData.characterData,
+					[name]: value,
+					name: '',
+					status: '',
+					species: '',
+				},
+				searchType: 'episode',
+			}))
+		else {
+			setSearchData(prevSearchData => ({
+				...prevSearchData,
+				characterData: {
+					...prevSearchData.characterData,
+					[name]: value,
+					episode: '',
+				},
+				searchType: 'character',
+			}))
+		}
+		setSearchData(prevSearchData => ({
+			...prevSearchData,
+			page: 1,
+		}))
 		setSelectedCharacter(null)
-		setCharacterData({
-			...characterData,
-			[name]: value,
-		})
+	}
+
+	// Обработчик изменения типа поиска
+	const handleSearchTypeChange = type => {
+		setSearchData(prevSearchData => ({
+			...prevSearchData,
+			searchType: type,
+		}))
 	}
 
 	const handlePageChange = async direction => {
@@ -151,7 +184,6 @@ function SearchForm({ scrollToTop }) {
 				newUrl = prevPage
 				break
 		}
-
 		if (newUrl) {
 			try {
 				const response = await axios.get(newUrl)
@@ -159,34 +191,36 @@ function SearchForm({ scrollToTop }) {
 					...prevSearchResult,
 					...response.data.results,
 				])
-				setNextPage(response.data.info.next)
-				setPrevPage(response.data.info.prev)
-				setPage(
-					direction === 'next'
-						? page + 1
-						: direction === 'prev'
-						? page - 1
-						: page
-				)
-				setTotalPage(response.data.info.pages)
-			} catch (error) {
-				console.error(error)
-			}
+				setSearchData(prevSearchData => ({
+					...prevSearchData,
+					nextPage: response.data.info.next,
+					prevPage: response.data.info.prev,
+					totalPage: response.data.info.pages,
+				}))
+				setSearchData(prevSearchData => ({
+					...prevSearchData,
+					page:
+						direction === 'next'
+							? prevSearchData.page + 1
+							: direction === 'prev'
+							? prevSearchData.page - 1
+							: prevSearchData.page,
+				}))
+			} catch (error) {}
 		}
 	}
 
 	return (
-		<div className='border border-white rounded-2xl px-8 py-4 '>
+		<div className='border border-white rounded-2xl py-2 sm:py-4 px-4 sm:px-8  '>
 			<div className='text-5xl mt-2 select-none hover:cursor-default'>
 				Вселенная Рик и Морти
 			</div>
 			<CharacterInput characterData={characterData} onChange={handleChange} />
-
 			{error ? (
 				<img
 					className='w-full focus:cursor-pointer'
 					src={EmptyListImg}
-					alt='EmptyListImg'
+					alt=''
 				></img>
 			) : (
 				<div className='mt-6 flex flex-col'>
@@ -205,5 +239,3 @@ function SearchForm({ scrollToTop }) {
 		</div>
 	)
 }
-
-export default SearchForm
