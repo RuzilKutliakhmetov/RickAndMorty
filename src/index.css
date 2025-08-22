@@ -1,13 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap');
+@import 'tailwindcss';
 
-@layer base {
-	input[type='number']::-webkit-inner-spin-button,
-	input[type='number']::-webkit-outer-spin-button {
-		-webkit-appearance: none;
-		margin: 0;
-	}
+@font-face {
+	font-family: CaveatSemiBold;
+	src: url('../src/assets/fonts/Caveat-SemiBold.ttf');
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+	--font-caveat-semibold: CaveatSemiBold, 'sans-serif';
+}
